@@ -4,7 +4,6 @@ const pidDoUsuario = process.argv[2];
 async function buscarProcessos() {
   try {
     const data = await fs.readdir("/proc", "utf8");
-    console.log(data)
 
     const readPid = data.filter((item => !isNaN(item)));
 
@@ -18,12 +17,29 @@ async function buscarProcessos() {
          arrayPids.push(pid)
         }
 
-
       } catch (err) {
         console.error(err)
       }
     }
     console.log(arrayPids)
+
+    const readStatus = arrayPids
+    const arrayStatus = []
+    for (const rs of readStatus) {
+      try {
+        const status = await fs.readFile(`/proc/${rs}/status`, "utf8")
+
+        const formatStatus = status.split('\n')
+        const linhaVmrss = formatStatus.find(formatStatus => formatStatus.startsWith("VmRSS:"))
+
+        arrayStatus.push(linhaVmrss);
+
+      } catch (err) {
+        console.error(err)
+      }
+    }
+
+    console.log(arrayStatus)
   } catch (err) {
     console.error("Deu erro 29: ", err)
   }
