@@ -31,8 +31,10 @@ async function buscarProcessos() {
 
         const formatStatus = status.split('\n')
         const linhaVmrss = formatStatus.find(formatStatus => formatStatus.startsWith("VmRSS:"))
+        const partes = linhaVmrss.split(/\s+/);
+        const memoriaEmKb = Number(partes[1]);
 
-        arrayStatus.push(linhaVmrss);
+        arrayStatus.push(memoriaEmKb);
 
       } catch (err) {
         console.error(err)
