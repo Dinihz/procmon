@@ -41,7 +41,20 @@ async function buscarProcessos() {
       }
     }
 
+    const total = arrayStatus.reduce((total, memoria) => total + memoria, 0)
+
+    let memoriaFormatada = ""
+
+    if (total >=  1024 * 1024) {
+      memoriaFormatada = `${(total / (1024 * 1024)).toFixed(2)} GB`
+    } else if (total >= 1024) {
+      memoriaFormatada = `${(total / 1024).toFixed(2)} MB`
+    } else {
+      memoriaFormatada = `${total} KB`
+    }
+
     console.log(arrayStatus)
+    console.log(memoriaFormatada)
   } catch (err) {
     console.error("Deu erro 29: ", err)
   }
