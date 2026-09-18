@@ -1,19 +1,24 @@
 const fs = require("node:fs/promises");
-const pidDoUsuario = process.argv[2];
+const userPid = process.argv[2];
 
-async function buscarProcessos() {
+//buscarPIDs(nome): vai em /proc e devolve a lista de PIDs correspondentes
+//  │ • lerMemoria(pid) (ou calcularMemoria(pids)): lê os status e soma/formata a memória
+//  │ • formatarMemoria(kb): cuida só da matemática de kB/MB/GB
+//  │ • Limpar os console.log de debug temporários (como aqueles console.log(arrayPids) e console.log(arrayStatus) que a gente usou
+//  │ para testar).
+
+async function searchPids() {
   try {
     const data = await fs.readdir("/proc", "utf8");
-
     const readPid = data.filter((item => !isNaN(item)));
 
     let pids = readPid
     const arrayPids = []
     for (const pid of pids) {
       try {
-        const nome = await fs.readFile(`/proc/${pid}/comm`, "utf8")
+        const name = await fs.readFile(`/proc/${pid}/comm`, "utf8")
 
-        if (nome.trim() === pidDoUsuario) {
+        if (name.trim() === userPid) {
          arrayPids.push(pid)
         }
 
@@ -21,7 +26,11 @@ async function buscarProcessos() {
         console.error(err)
       }
     }
-    console.log(arrayPids)
+
+    if (arrayPids.length === 0) {
+      console.log(`"${pidDoUsuario}" process not found.`)
+      return;
+    }
 
     const readStatus = arrayPids
     const arrayStatus = []
@@ -30,11 +39,11 @@ async function buscarProcessos() {
         const status = await fs.readFile(`/proc/${rs}/status`, "utf8")
 
         const formatStatus = status.split('\n')
-        const linhaVmrss = formatStatus.find(formatStatus => formatStatus.startsWith("VmRSS:"))
-        const partes = linhaVmrss.split(/\s+/);
-        const memoriaEmKb = Number(partes[1]);
+        const lineVmrss = formatStatus.find(formatStatus => formatStatus.startsWith("VmRSS:"))
+        const parts = lineVmrss.split(/\s+/);
+        const memoryInKb = Number(parts[1]);
 
-        arrayStatus.push(memoriaEmKb);
+        arrayStatus.push(memoryInKb);
 
       } catch (err) {
         console.error(err)
@@ -43,21 +52,21 @@ async function buscarProcessos() {
 
     const total = arrayStatus.reduce((total, memoria) => total + memoria, 0)
 
-    let memoriaFormatada = ""
+    let formatMemory = ""
 
     if (total >=  1024 * 1024) {
-      memoriaFormatada = `${(total / (1024 * 1024)).toFixed(2)} GB`
+      formatMemory = `${(total / (1024 * 1024)).toFixed(2)} GB`
     } else if (total >= 1024) {
-      memoriaFormatada = `${(total / 1024).toFixed(2)} MB`
+      formatMemory = `${(total / 1024).toFixed(2)} MB`
     } else {
-      memoriaFormatada = `${total} KB`
+      formatMemory = `${total} KB`
     }
 
     console.log(arrayStatus)
-    console.log(memoriaFormatada)
+    console.log(`===== PROCMON =====\n Process: ${userPid}\n PIDs: ${arrayPids.length}\n Memory: ${formatMemory}\n ==================`)
   } catch (err) {
     console.error("Deu erro 29: ", err)
   }
 }
 
-buscarProcessos()
+searchPids()
